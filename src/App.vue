@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -34,6 +34,9 @@ const contactName = ref("");
 const contactService = ref("E-Stamp & Documentation");
 const contactMessage = ref("");
 const showContactForm = ref(false);
+const serviceMenuOpen = ref(false);
+const activeServiceIndex = ref(0);
+const serviceSelect = ref(null);
 
 const categories = [
   { name: "All services", count: "14+" },
@@ -133,6 +136,11 @@ const services = [
   },
 ];
 
+const contactServices = [
+  ...services.map((service) => service.title),
+  "General enquiry",
+];
+
 const filteredServices = computed(() => {
   const needle = query.value.trim().toLowerCase();
   return services.filter((service) => {
@@ -160,6 +168,58 @@ function submitInquiry() {
   // Replace this placeholder with the business's verified WhatsApp number.
   window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
 }
+
+function closeServiceMenuOnOutsideClick(event) {
+  if (!serviceSelect.value?.contains(event.target)) {
+    serviceMenuOpen.value = false;
+  }
+}
+
+function openServiceMenu() {
+  activeServiceIndex.value = contactServices.indexOf(contactService.value);
+  serviceMenuOpen.value = true;
+}
+
+function selectService(service) {
+  contactService.value = service;
+  serviceMenuOpen.value = false;
+}
+
+function handleServiceKeydown(event) {
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    event.preventDefault();
+    if (!serviceMenuOpen.value) openServiceMenu();
+    else {
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      activeServiceIndex.value =
+        (activeServiceIndex.value + direction + contactServices.length) %
+        contactServices.length;
+    }
+  } else if (event.key === "Home" || event.key === "End") {
+    event.preventDefault();
+    if (!serviceMenuOpen.value) openServiceMenu();
+    activeServiceIndex.value =
+      event.key === "Home" ? 0 : contactServices.length - 1;
+  } else if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    if (serviceMenuOpen.value) {
+      selectService(contactServices[activeServiceIndex.value]);
+    } else {
+      openServiceMenu();
+    }
+  } else if (event.key === "Escape" && serviceMenuOpen.value) {
+    event.preventDefault();
+    serviceMenuOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("pointerdown", closeServiceMenuOnOutsideClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("pointerdown", closeServiceMenuOnOutsideClick);
+});
 </script>
 
 <template>
@@ -497,21 +557,62 @@ function submitInquiry() {
           /></label>
           <label
             >What do you need help with? <span>REQUIRED</span>
-            <div class="select-wrap">
-              <select v-model="contactService" required>
-                <option>E-Stamp & Documentation</option>
-                <option>GST & Tax Returns</option>
-                <option>Insurance & LIC</option>
-                <option>RTO & Vehicle Works</option>
-                <option>Business Registrations</option>
-                <option>Railway Tickets & PF</option>
-                <option>Computers & Laptops</option>
-                <option>Accessories & Devices</option>
-                <option>Laptop & PC Repair</option>
-                <option>Printer Service</option>
-                <option>Mobile & More</option>
-                <option>General enquiry</option></select
-              ><ChevronDown :size="16" />
+            <div ref="serviceSelect" class="select-wrap">
+              <button
+                type="button"
+                class="select-trigger"
+                role="combobox"
+                aria-label="What do you need help with?"
+                aria-haspopup="listbox"
+                aria-controls="contact-service-options"
+                :aria-expanded="serviceMenuOpen"
+                :aria-activedescendant="
+                  serviceMenuOpen
+                    ? `contact-service-option-${activeServiceIndex}`
+                    : undefined
+                "
+                @click="
+                  serviceMenuOpen ? (serviceMenuOpen = false) : openServiceMenu()
+                "
+                @keydown="handleServiceKeydown"
+                @blur="serviceMenuOpen = false"
+              >
+                {{ contactService }}
+              </button>
+              <ChevronDown
+                :size="16"
+                class="select-chevron"
+                :class="{ expanded: serviceMenuOpen }"
+              />
+              <input
+                class="validation-proxy"
+                type="text"
+                required
+                aria-hidden="true"
+                tabindex="-1"
+                :value="contactService"
+              />
+              <div
+                v-if="serviceMenuOpen"
+                id="contact-service-options"
+                class="service-options"
+                role="listbox"
+                aria-label="Available services"
+              >
+                <div
+                  v-for="(service, index) in contactServices"
+                  :key="service"
+                  :id="`contact-service-option-${index}`"
+                  class="service-option"
+                  :class="{ active: activeServiceIndex === index }"
+                  role="option"
+                  :aria-selected="contactService === service"
+                  @mouseenter="activeServiceIndex = index"
+                  @click="selectService(service)"
+                >
+                  {{ service }}
+                </div>
+              </div>
             </div>
           </label>
           <label
