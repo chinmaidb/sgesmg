@@ -1,0 +1,11 @@
+Please add necessary files and directories to the .gitignore file to prevent them from being tracked by Git. Common entries include:```
+# Node.js dependencies
+node_modules/
+# Logs
+logs/
+*.log
+# Environment variables                                                                       .env
+# Build output
+dist/
+# Temporary files
+tmp/

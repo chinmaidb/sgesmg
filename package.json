@@ -1,0 +1,21 @@
+{
+  "name": "shree-guru-enterprises",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-vue-next": "latest",
+    "vue": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "latest",
+    "@vitejs/plugin-vue": "latest",
+    "tailwindcss": "latest",
+    "vite": "latest"
+  }
+}
